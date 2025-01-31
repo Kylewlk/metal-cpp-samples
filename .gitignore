@@ -5,7 +5,6 @@
 *.slo
 *.lo
 *.o
-*.obj
 
 # Precompiled Headers
 *.gch
@@ -30,3 +29,19 @@
 *.exe
 *.out
 *.app
+
+.idea
+cmake-build*
+
+imgui.ini
+imgui_log.txt
+
+.vs
+out
+.data
+.vscode
+
+# Xcode
+DerivedData
+Build
+.DS_Store
