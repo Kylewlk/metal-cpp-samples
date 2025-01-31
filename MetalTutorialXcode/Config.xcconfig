@@ -1,0 +1,19 @@
+//
+//  Config.xcconfig
+//  HelloMetal
+//
+//  Created by Kyle on 2025/1/31.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+// metal-cpp
+HEADER_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)/metal-cpp
+OTHER_LDFLAGS = $(inherited) -framework Foundation -framework Metal -framework QuartzCore
+
+// glfw3
+HEADER_SEARCH_PATHS = $(HEADER_SEARCH_PATHS) $(SRCROOT)/glfw/include
+OTHER_LDFLAGS = $(OTHER_LDFLAGS) -L$(SRCROOT)/glfw/lib -lglfw3
+OTHER_LDFLAGS = $(OTHER_LDFLAGS) -framework Cocoa -framework IOKit
+
