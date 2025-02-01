@@ -42,6 +42,22 @@ out
 .vscode
 
 # Xcode
+# https://gist.github.com/adamgit/3786883
 DerivedData
 Build
 .DS_Store
+.Trashes
+*.lock
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+!default.pbxuser
+!default.mode1v3
+!default.mode2v3
+!default.perspectivev3
+*.xccheckout
+xcuserdata
+*.moved-aside
+
+
