@@ -1,11 +1,6 @@
-//
-//  main.cpp
-//  HelloMetal
-//
-//  Created by Kyle on 2025/1/31.
-//
 
 #include <iostream>
+#include <filesystem>
 #include <thread>
 
 #include <Metal/Metal.hpp>
@@ -24,8 +19,14 @@
 
 int main(int argc, const char * argv[])
 {
-    std::cout << "Start!!" << std::endl;
-    
+    std::filesystem::current_path(CURRENT_WORKING_DIR);//setting path
+    std::cout << "working path: " << std::filesystem::current_path() << std::endl;
+
+    if(!std::filesystem::exists(".data/"))
+    {
+        std::filesystem::create_directories(".data");
+    }
+
     glfwSetErrorCallback([](int error_code, const char* description){
         std::cerr << "GLFW Error, error code: " << error_code << ", Detail: " << description << std::endl;
     });
