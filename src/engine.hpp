@@ -25,11 +25,28 @@ private:
 
     void initDevice();
     void initWindow();
+    
+    void createTriangel();
+    void createLibrary();
+    void createCommandQueue();
+    void createRenderPipline();
+    
+    void encodeRenderCommand(MTL::RenderCommandEncoder* renderEncoder);
+    void sendRenderCommand();
+    void draw();
+    
 
     MTL::Device* metalDevice{};
     GLFWwindow* glfwWindow{};
     NSWindow* metalWindow{};
-    CAMetalLayer* metalLayer;
+    CAMetalLayer* metalLayer{};
+    CA::MetalDrawable* metalDrawable{};
+    
+    MTL::Library* metalLibrary{};
+    MTL::CommandQueue* metalCommandQueue{};
+    MTL::CommandBuffer* metalCommandBuffer{};
+    MTL::RenderPipelineState* metalRenderPS0{};
+    MTL::Buffer* triangleVertexBuffer{};
 };
 
 
