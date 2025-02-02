@@ -88,13 +88,9 @@ using namespace metal;
 using namespace metal;
 
 vertex float4 vertexShader(uint vertexID [[vertex_id]],
-             constant simd::float3* vertexPositions)
+             device const float3* positions [[buffer(0)]])
 {
-    float4 vertexOutPositions = float4(vertexPositions[vertexID][0],
-                                       vertexPositions[vertexID][1],
-                                       vertexPositions[vertexID][2],
-                                       1.0f);
-    return vertexOutPositions;
+    return float4(positions[vertexID], 1.0);
 }
 
 fragment float4 fragmentShader(float4 vertexOutPositions [[stage_in]]) {
