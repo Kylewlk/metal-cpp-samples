@@ -14,9 +14,17 @@
 #include <QuartzCore/CAMetalLayer.hpp>
 #include <QuartzCore/CAMetalLayer.h>
 
+#include <simd/simd.h>
+
 class MTLEngine 
 {
 public:
+    struct Vertex
+    {
+        simd::float3 pos{};
+        simd::float4 color{};
+    };
+    
     void init();
     void run();
     void cleanup();
@@ -46,7 +54,9 @@ private:
     MTL::CommandQueue* metalCommandQueue{};
     MTL::CommandBuffer* metalCommandBuffer{};
     MTL::RenderPipelineState* metalRenderPS0{};
-    MTL::Buffer* triangleVertexBuffer{};
+    MTL::Buffer* vertexBuffer{};
+    MTL::Buffer* colorBuffer{};
+    MTL::Buffer* argBuffer{};
 };
 
 
