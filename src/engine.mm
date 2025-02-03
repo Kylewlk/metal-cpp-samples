@@ -1,16 +1,16 @@
 
 #include "engine.hpp"
-#include <simd/simd.h>
 
 void MTLEngine::init()
 {
     initDevice();
     initWindow();
     
-    createTriangel();
+    createSquare();
     createLibrary();
     createCommandQueue();
     createRenderPipline();
+    createTexture();
 }
 
 void MTLEngine::run()
@@ -31,7 +31,10 @@ void MTLEngine::cleanup()
     glfwWindow = nullptr;
     glfwTerminate();
    
+    delete image;
+    image = nullptr;
     vertexBuffer->release();
+    indexBuffer->release();
     metalLibrary->release();
     metalCommandQueue->release();
     metalRenderPS0->release();
@@ -52,8 +55,9 @@ void MTLEngine::initWindow()
         NSLog(@"GLFW Error, error code: %d, Detail: %s ", error_code, description);
     });
     
+    glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
     glfwInit();
-    
+
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindow = glfwCreateWindow(800, 600, "Metal Engine", NULL, NULL);
     if (!glfwWindow) {
@@ -75,15 +79,28 @@ void MTLEngine::initWindow()
     });
 }
 
-void MTLEngine::createTriangel()
+void MTLEngine::createSquare()
 {
     Vertex vertices[] = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-        {{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-        {{ 0.0f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f}},
+        {{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f}},
+        {{ 0.5f, -0.5f, 0.0f}, {1.0f, 1.0f}},
+        {{ 0.5f,  0.5f, 0.0f}, {1.0f, 0.0f}},
+    };
+    
+    uint32_t indices[] = {
+      0, 1, 2,
+      3, 2, 0
     };
 
     vertexBuffer = this->metalDevice->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
+    
+    indexBuffer = this->metalDevice->newBuffer(indices, sizeof(indices), MTL::ResourceStorageModeShared);
+}
+
+void MTLEngine::createTexture()
+{
+    this->image = new Texture("assets/1.png", metalDevice);
 }
 
 void MTLEngine::createLibrary()
@@ -95,13 +112,13 @@ using namespace metal;
 struct VertexOut
 {
     float4 position [[position]];
-    half3 color;
+    float2 texCoord;
 };
 
 struct VertexInput
 {
     float3 position [[attribute(0)]];
-    float3 color [[attribute(1)]];
+    float2 texCoord [[attribute(1)]];
 };
 
 
@@ -109,12 +126,15 @@ vertex VertexOut vertexShader(VertexInput vi [[stage_in]])
 {
     VertexOut vo;
     vo.position = float4(vi.position, 1.0);
-    vo.color = half3(vi.color);
+    vo.texCoord = vi.texCoord;
     return vo;
 }
 
-fragment half4 fragmentShader(VertexOut vertexOut[[stage_in]]) {
-    return half4(vertexOut.color, 1.0);
+fragment half4 fragmentShader(VertexOut vo[[stage_in]],
+                              texture2d<float> image [[texture(0)]]) {
+    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    const float4 color = image.sample(textureSampler, vo.texCoord);
+    return half4(color);
 }
 
 )";
@@ -148,9 +168,9 @@ void MTLEngine::createRenderPipline()
     posDp->setOffset(offsetof(Vertex, pos));
     
     MTL::VertexAttributeDescriptor* colorDp = attributes->object(1);
-    colorDp->setFormat(MTL::VertexFormat::VertexFormatFloat3);
+    colorDp->setFormat(MTL::VertexFormat::VertexFormatFloat2);
     colorDp->setBufferIndex(0);
-    colorDp->setOffset(offsetof(Vertex, color));
+    colorDp->setOffset(offsetof(Vertex, uv));
     
     MTL::VertexBufferLayoutDescriptor* vertexLayoutDp = vertexDescriptor->layouts()->object(0);
     vertexLayoutDp->setStride(sizeof(Vertex));
@@ -205,6 +225,8 @@ void MTLEngine::encodeRenderCommand(MTL::RenderCommandEncoder *renderEncoder)
 {
     renderEncoder->setRenderPipelineState(metalRenderPS0);
     renderEncoder->setVertexBuffer(vertexBuffer, 0, 0);
-    renderEncoder->drawPrimitives(MTL::PrimitiveTypeTriangle, 0, 3, 1);
+    renderEncoder->setFragmentTexture(image->texture, 0);
+    renderEncoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt32, indexBuffer, 0, 1);
+//    renderEncoder->drawPrimitives(MTL::PrimitiveTypeTriangleStrip, 0, 4, 1);
     
 }

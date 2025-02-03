@@ -14,15 +14,15 @@
 #include <QuartzCore/CAMetalLayer.hpp>
 #include <QuartzCore/CAMetalLayer.h>
 
-#include <simd/simd.h>
+#include "texture.hpp"
 
 class MTLEngine 
 {
 public:
     struct Vertex
     {
-        simd::float3 pos{};
-        simd::float3 color{};
+        float pos[3]{};
+        float uv[2]{};
     };
     
     void init();
@@ -34,10 +34,11 @@ private:
     void initDevice();
     void initWindow();
     
-    void createTriangel();
+    void createSquare();
     void createLibrary();
     void createCommandQueue();
     void createRenderPipline();
+    void createTexture();
     
     void encodeRenderCommand(MTL::RenderCommandEncoder* renderEncoder);
     void sendRenderCommand();
@@ -55,6 +56,9 @@ private:
     MTL::CommandBuffer* metalCommandBuffer{};
     MTL::RenderPipelineState* metalRenderPS0{};
     MTL::Buffer* vertexBuffer{};
+    MTL::Buffer* indexBuffer{};
+    
+    Texture* image{};
 };
 
 
