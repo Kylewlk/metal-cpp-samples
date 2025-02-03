@@ -68,6 +68,11 @@ void MTLEngine::initWindow()
     metalWindow.contentView.layer = metalLayer;
     metalWindow.contentView.wantsLayer = YES;
     
+    glfwSetWindowUserPointer(glfwWindow, this);
+    glfwSetWindowSizeCallback(glfwWindow, [](GLFWwindow* window, int width, int height){
+        auto engine = (MTLEngine*)glfwGetWindowUserPointer(window);
+        engine->metalLayer.drawableSize = CGSizeMake(width, height);
+    });
 }
 
 void MTLEngine::createTriangel()
