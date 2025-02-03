@@ -34,15 +34,18 @@ private:
     void initDevice();
     void initWindow();
     
+    void createRenderAttachments();
     void createSquare();
     void createLibrary();
     void createCommandQueue();
     void createRenderPipline();
     void createTexture();
+    void createUboBuffer();
     
     void encodeRenderCommand(MTL::RenderCommandEncoder* renderEncoder);
     void sendRenderCommand();
     void draw();
+    void updateUbo();
     
 
     MTL::Device* metalDevice{};
@@ -51,12 +54,16 @@ private:
     CAMetalLayer* metalLayer{};
     CA::MetalDrawable* metalDrawable{};
     
+    int msaaSampleCount = 4;
+    MTL::Texture* msaaTexture{};
+    MTL::Texture* depthTexture{};
+    MTL::DepthStencilState* depthState{};
     MTL::Library* metalLibrary{};
     MTL::CommandQueue* metalCommandQueue{};
     MTL::CommandBuffer* metalCommandBuffer{};
     MTL::RenderPipelineState* metalRenderPS0{};
     MTL::Buffer* vertexBuffer{};
-    MTL::Buffer* indexBuffer{};
+    MTL::Buffer* uboBuffer{};
     
     Texture* image{};
     MTL::SamplerState* textureSampler{};

@@ -15,10 +15,11 @@ struct VertexInput
 };
 
 
-vertex VertexOut vertexShader(VertexInput vi [[stage_in]])
+vertex VertexOut vertexShader(VertexInput vi [[stage_in]],
+                              constant float4x4& mvp [[buffer(1)]])
 {
     VertexOut vo;
-    vo.position = float4(vi.position, 1.0);
+    vo.position = mvp * float4(vi.position, 1.0);
     vo.texCoord = vi.texCoord;
     return vo;
 }
