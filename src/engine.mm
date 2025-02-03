@@ -32,8 +32,6 @@ void MTLEngine::cleanup()
     glfwTerminate();
    
     vertexBuffer->release();
-    colorBuffer->release();
-    argBuffer->release();
     metalLibrary->release();
     metalCommandQueue->release();
     metalRenderPS0->release();
@@ -74,25 +72,13 @@ void MTLEngine::initWindow()
 
 void MTLEngine::createTriangel()
 {
-//    Vertex triangleVertices[] = {
-//        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-//        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-//        {{0.0f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-//    };
-    
-    simd::float3 vertices[] = {
-        {-0.5f, -0.5f, 0.0f},
-        {0.5f, -0.5f, 0.0f},
-        {0.0f, 0.5f, 0.0f},
-    };
-    simd::float3 colors[] = {
-        {1.0f, 0.0f, 0.0f},
-        {0.0f, 1.0f, 0.0f},
-        {0.0f, 0.0f, 1.0f},
+    Vertex vertices[] = {
+        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+        {{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+        {{ 0.0f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
     };
 
     vertexBuffer = this->metalDevice->newBuffer(vertices, sizeof(vertices), MTL::ResourceStorageModeShared);
-    colorBuffer = this->metalDevice->newBuffer(colors, sizeof(colors), MTL::ResourceStorageModeShared);
 }
 
 void MTLEngine::createLibrary()
@@ -109,22 +95,23 @@ struct VertexOut
 
 struct VertexInput
 {
-    device float3* positions [[id(0)]];
-    device float3* colors [[id(1)]];
+    float3 position [[attribute(0)]];
+    float3 color [[attribute(1)]];
 };
 
 
-vertex VertexOut vertexShader(uint vertexID [[vertex_id]], device const VertexInput* vi [[buffer(0)]])
+vertex VertexOut vertexShader(VertexInput vi [[stage_in]])
 {
     VertexOut vo;
-    vo.position = float4(vi->positions[vertexID], 1.0);
-    vo.color = half3(vi->colors[vertexID]);
+    vo.position = float4(vi.position, 1.0);
+    vo.color = half3(vi.color);
     return vo;
 }
 
 fragment half4 fragmentShader(VertexOut vertexOut[[stage_in]]) {
     return half4(vertexOut.color, 1.0);
 }
+
 )";
     
     NS::Error* error = nullptr;
@@ -147,15 +134,27 @@ void MTLEngine::createRenderPipline()
     MTL::Function* fragmentShader = metalLibrary->newFunction(NS::String::string("fragmentShader", NS::UTF8StringEncoding));
     assert(fragmentShader);
     
-    MTL::ArgumentEncoder* argEncoder = vertexShader->newArgumentEncoder(0);
-    argBuffer = this->metalDevice->newBuffer(argEncoder->encodedLength(), MTL::ResourceStorageModeManaged);
-    argEncoder->setArgumentBuffer(argBuffer, 0);
-    argEncoder->setBuffer(vertexBuffer, 0, 0);
-    argEncoder->setBuffer(colorBuffer, 0, 1);
-    argEncoder->release();
+    MTL::VertexDescriptor* vertexDescriptor = MTL::VertexDescriptor::alloc()->init();
+    MTL::VertexAttributeDescriptorArray* attributes = vertexDescriptor->attributes();
     
+    MTL::VertexAttributeDescriptor* posDp = attributes->object(0);
+    posDp->setFormat(MTL::VertexFormat::VertexFormatFloat3);
+    posDp->setBufferIndex(0);
+    posDp->setOffset(offsetof(Vertex, pos));
+    
+    MTL::VertexAttributeDescriptor* colorDp = attributes->object(1);
+    colorDp->setFormat(MTL::VertexFormat::VertexFormatFloat3);
+    colorDp->setBufferIndex(0);
+    colorDp->setOffset(offsetof(Vertex, color));
+    
+    MTL::VertexBufferLayoutDescriptor* vertexLayoutDp = vertexDescriptor->layouts()->object(0);
+    vertexLayoutDp->setStride(sizeof(Vertex));
+    vertexLayoutDp->setStepRate(1);
+    vertexLayoutDp->setStepFunction(MTL::VertexStepFunction::VertexStepFunctionPerVertex);
+
     MTL::RenderPipelineDescriptor* renderPipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
     renderPipelineDescriptor->setLabel(NS::String::string("Triangle Rendering Pipeline", NS::UTF8StringEncoding));
+    renderPipelineDescriptor->setVertexDescriptor(vertexDescriptor);
     renderPipelineDescriptor->setVertexFunction(vertexShader);
     renderPipelineDescriptor->setFragmentFunction(fragmentShader);
     MTL::PixelFormat pixelFormat = (MTL::PixelFormat)metalLayer.pixelFormat;
@@ -200,9 +199,7 @@ void MTLEngine::sendRenderCommand()
 void MTLEngine::encodeRenderCommand(MTL::RenderCommandEncoder *renderEncoder)
 {
     renderEncoder->setRenderPipelineState(metalRenderPS0);
-    renderEncoder->setVertexBuffer(argBuffer, 0, 0);
-    renderEncoder->useResource(vertexBuffer, MTL::ResourceUsageRead);
-    renderEncoder->useResource(colorBuffer, MTL::ResourceUsageRead);
+    renderEncoder->setVertexBuffer(vertexBuffer, 0, 0);
     renderEncoder->drawPrimitives(MTL::PrimitiveTypeTriangle, 0, 3, 1);
     
 }

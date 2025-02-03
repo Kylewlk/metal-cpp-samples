@@ -22,7 +22,7 @@ public:
     struct Vertex
     {
         simd::float3 pos{};
-        simd::float4 color{};
+        simd::float3 color{};
     };
     
     void init();
@@ -55,8 +55,6 @@ private:
     MTL::CommandBuffer* metalCommandBuffer{};
     MTL::RenderPipelineState* metalRenderPS0{};
     MTL::Buffer* vertexBuffer{};
-    MTL::Buffer* colorBuffer{};
-    MTL::Buffer* argBuffer{};
 };
 
 

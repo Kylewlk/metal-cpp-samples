@@ -10,9 +10,10 @@ set(CMAKE_C_STANDARD 17)
 add_subdirectory(libs)
 
 file(GLOB_RECURSE src_code LIST_DIRECTORIES false
-        src/*.hpp src/*.h src/*.cpp src/*.c src/*.m src/*.mm)
+        src/*.hpp src/*.h src/*.cpp src/*.c src/*.m src/*.mm
+        src/*.metal)
 
-add_executable(${target_name} ${src_code})
+add_executable(${target_name} MACOSX_BUNDLE ${src_code})
 
 target_link_libraries(${target_name} third_libs)
 
