@@ -24,9 +24,10 @@ vertex VertexOut vertexShader(VertexInput vi [[stage_in]])
 }
 
 fragment half4 fragmentShader(VertexOut vo[[stage_in]],
-                              texture2d<float> image [[texture(0)]]) {
-    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
-    const float4 color = image.sample(textureSampler, vo.texCoord);
+                              texture2d<half> image [[texture(0)]],
+                              sampler textureSampler [[sampler(0)]]) {
+//    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    auto color = image.sample(textureSampler, vo.texCoord);
     return half4(color);
 }
 

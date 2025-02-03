@@ -59,6 +59,7 @@ private:
     MTL::Buffer* indexBuffer{};
     
     Texture* image{};
+    MTL::SamplerState* textureSampler{};
 };
 
 

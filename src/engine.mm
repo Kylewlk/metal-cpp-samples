@@ -33,6 +33,7 @@ void MTLEngine::cleanup()
    
     delete image;
     image = nullptr;
+    textureSampler->release();
     vertexBuffer->release();
     indexBuffer->release();
     metalLibrary->release();
@@ -101,6 +102,13 @@ void MTLEngine::createSquare()
 void MTLEngine::createTexture()
 {
     this->image = new Texture("assets/1.png", metalDevice);
+    
+    auto samplerDescriptor = MTL::SamplerDescriptor::alloc()->init();
+    samplerDescriptor->setLabel(NS::String::string("SamplerLinner", NS::UTF8StringEncoding));
+    samplerDescriptor->setMagFilter(MTL::SamplerMinMagFilterLinear);
+    samplerDescriptor->setMinFilter(MTL::SamplerMinMagFilterLinear);
+    
+    this->textureSampler = this->metalDevice->newSamplerState(samplerDescriptor);
 }
 
 void MTLEngine::createLibrary()
@@ -131,9 +139,10 @@ vertex VertexOut vertexShader(VertexInput vi [[stage_in]])
 }
 
 fragment half4 fragmentShader(VertexOut vo[[stage_in]],
-                              texture2d<float> image [[texture(0)]]) {
-    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
-    const float4 color = image.sample(textureSampler, vo.texCoord);
+                              texture2d<half> image [[texture(0)]],
+                              sampler textureSampler [[sampler(0)]]) {
+//    constexpr sampler textureSampler(mag_filter::linear, min_filter::linear);
+    auto color = image.sample(textureSampler, vo.texCoord);
     return half4(color);
 }
 
@@ -183,7 +192,12 @@ void MTLEngine::createRenderPipline()
     renderPipelineDescriptor->setVertexFunction(vertexShader);
     renderPipelineDescriptor->setFragmentFunction(fragmentShader);
     MTL::PixelFormat pixelFormat = (MTL::PixelFormat)metalLayer.pixelFormat;
-    renderPipelineDescriptor->colorAttachments()->object(0)->setPixelFormat(pixelFormat);
+    auto colorAttachment = renderPipelineDescriptor->colorAttachments()->object(0);
+    colorAttachment->setPixelFormat(pixelFormat);
+    colorAttachment->setBlendingEnabled(true);
+    colorAttachment->setRgbBlendOperation(MTL::BlendOperationAdd);
+    colorAttachment->setSourceRGBBlendFactor(MTL::BlendFactorSourceAlpha);
+    colorAttachment->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
     
     NS::Error* error = nullptr;
     metalRenderPS0 = metalDevice->newRenderPipelineState(renderPipelineDescriptor, &error);
@@ -226,6 +240,7 @@ void MTLEngine::encodeRenderCommand(MTL::RenderCommandEncoder *renderEncoder)
     renderEncoder->setRenderPipelineState(metalRenderPS0);
     renderEncoder->setVertexBuffer(vertexBuffer, 0, 0);
     renderEncoder->setFragmentTexture(image->texture, 0);
+    renderEncoder->setFragmentSamplerState(textureSampler, 0);
     renderEncoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, 6, MTL::IndexTypeUInt32, indexBuffer, 0, 1);
 //    renderEncoder->drawPrimitives(MTL::PrimitiveTypeTriangleStrip, 0, 4, 1);
     
